@@ -19,35 +19,38 @@ const checkCredentials = async (req, res, next) => {
     username: userData[0],
     password: userData[1],
   };
+  try {
+    const userExists = await User.findOne({ username: user.username });
 
-  const userExists = await User.findOne({ username: user.username });
+    if (!userExists) {
+      const error = new Error("Username not found in the database");
+      error.code = 401;
+      next(error);
+      return;
+    }
 
-  if (!userExists) {
-    const error = new Error("Username not found in the database");
-    error.code = 401;
+    const validPassword = await bcrypt.compare(
+      user.password,
+      userExists.password
+    );
+
+    if (!validPassword) {
+      const error = new Error("Invalid password");
+      error.code = 401;
+      next(error);
+      return;
+    }
+
+    req.user = userExists;
+    req.auth = {
+      name: userExists.name,
+      id: userExists.id,
+    };
+
+    next();
+  } catch (error) {
     next(error);
-    return;
   }
-
-  const validPassword = await bcrypt.compare(
-    user.password,
-    userExists.password
-  );
-
-  if (!validPassword) {
-    const error = new Error("Invalid password");
-    error.code = 401;
-    next(error);
-    return;
-  }
-
-  req.user = userExists;
-  req.auth = {
-    name: userExists.name,
-    id: userExists.id,
-  };
-
-  next();
 };
 
 const getCredentials = (req, res, next) => {};
