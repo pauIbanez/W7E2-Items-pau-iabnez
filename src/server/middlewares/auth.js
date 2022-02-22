@@ -1,4 +1,5 @@
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const User = require("../../database/models/User");
 
 const checkCredentials = async (req, res, next) => {
@@ -55,25 +56,61 @@ const checkCredentials = async (req, res, next) => {
 
 const checkUserAvailavility = async (req, res, next) => {
   const user = req.body;
-  console.log(req.body);
+
   if (!user || Object.keys(user).length !== 3 || !user.username) {
     const error = new Error("Invalid user data");
     error.code = 400;
     next(error);
     return;
   }
+  try {
+    const userExists = await User.findOne({ username: user.username });
+    if (userExists) {
+      const error = new Error("Username already exists");
+      error.code = 409;
+      next(error);
+      return;
+    }
+    req.user = user;
 
-  const userExists = await User.findOne({ username: user.username });
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
 
-  if (userExists) {
-    const error = new Error("Username already exists");
-    error.code = 409;
+const verifyUserToken = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    const error = new Error("Authorization failed: auth header missing");
+    error.code = 401;
     next(error);
     return;
   }
-  req.user = user;
 
-  next();
+  const tokenData = authHeader.split(" ");
+
+  if (tokenData[0] !== "Bearer") {
+    const error = new Error("Authorization failed: bearer not found");
+    error.code = 401;
+    next(error);
+    return;
+  }
+  const secret = process.env.TOKEN_SECRET;
+
+  try {
+    const { id, username } = await jwt.verify(tokenData[1], secret);
+    req.user = {
+      id,
+      username,
+    };
+    next();
+  } catch (error) {
+    const newError = new Error("Authorization failed: token invalid");
+    error.code = 401;
+    next(newError);
+  }
 };
 
-module.exports = { getCredentials: checkUserAvailavility, checkCredentials };
+module.exports = { checkUserAvailavility, checkCredentials, verifyUserToken };
