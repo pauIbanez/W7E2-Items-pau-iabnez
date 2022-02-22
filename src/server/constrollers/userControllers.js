@@ -24,7 +24,6 @@ const registerUser = async (req, res, next) => {
 
     res.status(201).json({});
   } catch (error) {
-    error.code = 500;
     next(error);
   }
 };

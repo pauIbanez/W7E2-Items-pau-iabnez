@@ -53,8 +53,15 @@ const checkCredentials = async (req, res, next) => {
   }
 };
 
-const getCredentials = async (req, res, next) => {
-  const { user } = req.body;
+const checkUserAvailavility = async (req, res, next) => {
+  const user = req.body;
+  console.log(req.body);
+  if (!user || Object.keys(user).length !== 3 || !user.username) {
+    const error = new Error("Invalid user data");
+    error.code = 400;
+    next(error);
+    return;
+  }
 
   const userExists = await User.findOne({ username: user.username });
 
@@ -69,4 +76,4 @@ const getCredentials = async (req, res, next) => {
   next();
 };
 
-module.exports = { getCredentials, checkCredentials };
+module.exports = { getCredentials: checkUserAvailavility, checkCredentials };
