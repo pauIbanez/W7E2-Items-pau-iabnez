@@ -1,4 +1,5 @@
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const User = require("../../database/models/User");
 
 const checkCredentials = async (req, res, next) => {
@@ -78,4 +79,38 @@ const checkUserAvailavility = async (req, res, next) => {
   }
 };
 
-module.exports = { getCredentials: checkUserAvailavility, checkCredentials };
+const verifyUserToken = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    const error = new Error("Authorization failed: auth header missing");
+    error.code = 401;
+    next(error);
+    return;
+  }
+
+  const tokenData = authHeader.split(" ");
+
+  if (tokenData[0] !== "Bearer") {
+    const error = new Error("Authorization failed: bearer not found");
+    error.code = 401;
+    next(error);
+    return;
+  }
+  const secret = process.env.TOKEN_SECRET;
+
+  try {
+    const { id, username } = await jwt.verify(tokenData[1], secret);
+    req.user = {
+      id,
+      username,
+    };
+    next();
+  } catch (error) {
+    const newError = new Error("Authorization failed: token invalid");
+    error.code = 401;
+    next(newError);
+  }
+};
+
+module.exports = { checkUserAvailavility, checkCredentials, verifyUserToken };
