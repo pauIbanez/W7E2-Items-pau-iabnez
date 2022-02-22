@@ -6,7 +6,7 @@ const secret = process.env.TOKEN_SECRET;
 
 const loginUser = (req, res) => {
   const data = req.auth;
-  const token = jwt.sign(data, secret);
+  const token = jwt.sign(data, secret, { expiresIn: "2d" });
 
   res.json({ token });
 };
