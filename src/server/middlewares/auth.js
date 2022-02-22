@@ -53,6 +53,20 @@ const checkCredentials = async (req, res, next) => {
   }
 };
 
-const getCredentials = (req, res, next) => {};
+const getCredentials = async (req, res, next) => {
+  const { user } = req.body;
+
+  const userExists = await User.findOne({ username: user.username });
+
+  if (userExists) {
+    const error = new Error("Username already exists");
+    error.code = 409;
+    next(error);
+    return;
+  }
+  req.user = user;
+
+  next();
+};
 
 module.exports = { getCredentials, checkCredentials };
