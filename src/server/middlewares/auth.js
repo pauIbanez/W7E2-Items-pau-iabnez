@@ -1,4 +1,5 @@
 const bcrypt = require("bcrypt");
+const User = require("../../database/models/User");
 
 const checkCredentials = async (req, res, next) => {
   const authData = req.headers.authorization.split(" ");
@@ -42,6 +43,7 @@ const checkCredentials = async (req, res, next) => {
 
   req.user = userExists;
   req.auth = {
+    name: userExists.name,
     id: userExists.id,
   };
 
