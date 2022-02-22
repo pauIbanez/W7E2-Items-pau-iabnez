@@ -53,6 +53,27 @@ const checkCredentials = async (req, res, next) => {
   }
 };
 
-const getCredentials = (req, res, next) => {};
+const checkUserAvailavility = async (req, res, next) => {
+  const user = req.body;
+  console.log(req.body);
+  if (!user || Object.keys(user).length !== 3 || !user.username) {
+    const error = new Error("Invalid user data");
+    error.code = 400;
+    next(error);
+    return;
+  }
 
-module.exports = { getCredentials, checkCredentials };
+  const userExists = await User.findOne({ username: user.username });
+
+  if (userExists) {
+    const error = new Error("Username already exists");
+    error.code = 409;
+    next(error);
+    return;
+  }
+  req.user = user;
+
+  next();
+};
+
+module.exports = { getCredentials: checkUserAvailavility, checkCredentials };
