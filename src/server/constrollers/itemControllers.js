@@ -9,3 +9,5 @@ const getItems = (req, res, next) => {
     next(error);
   }
 };
+
+module.exports = { getItems };
